@@ -17,9 +17,9 @@ namespace frbb {
 	extern pthread_key_t current_key;
 	extern pthread_once_t current_key_once;
 
-	auto soak(frbb::BubblePipe* _pipe = nullptr) -> void;
+	auto soak(frbb::pipe* _pipe = nullptr) -> void;
 	auto current_key_alloc() -> void;
-	auto destroy(void * buf) -> void;
+	auto destroy(void * buf = nullptr) -> void;
 	auto get_current() -> frbb::pipe;
 
 	class bubble {
@@ -45,6 +45,7 @@ namespace frbb {
 	class BubblePipe {
 	public:
 		BubblePipe();
+		BubblePipe(frbb::BubblePipe* _prev);
 		virtual ~BubblePipe();
 
 		BubblePipe(frbb::BubblePipe& _rhs) = delete;
@@ -71,9 +72,9 @@ namespace frbb {
 	setjmp(frbb::get_current()->get_buffer());			\
 	if (!frbb::get_current()->get_bubble()->bursted())
 #define burst(c, b)							\
-	c b = *(static_cast<c*>(frbb::get_current()->get_bubble())); \
-	frbb::get_current() = frbb::get_current()->pop();		\
+	c b = *(static_cast<c*>(frbb::get_current()->get_bubble()));	\
+	frbb::get_current()->pop();					\
 	if (b.bursted())
 #define blow(b)								\
-	{ frbb::get_current()->set_bubble(static_cast< frbb::bubble* >(b)); \
+	{ frbb::get_current()->set_bubble(b);				\
 		frbb::get_current()->blow_pipe(); }

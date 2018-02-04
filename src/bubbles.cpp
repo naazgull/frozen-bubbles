@@ -4,18 +4,23 @@ namespace frbb {
 	pthread_key_t current_key;
 	pthread_once_t current_key_once = PTHREAD_ONCE_INIT;
 }
-auto frbb::soak(frbb::BubblePipe* _pipe) -> void {
+auto frbb::soak(frbb::pipe* _pipe) -> void {
 	pthread_once(&frbb::current_key_once, frbb::current_key_alloc);
-	pthread_setspecific(frbb::current_key, _pipe != nullptr ? _pipe : new frbb::BubblePipe());
+	pthread_setspecific(frbb::current_key, _pipe != nullptr ? _pipe : new frbb::pipe());
 }
 auto frbb::current_key_alloc() -> void {
 	pthread_key_create(&frbb::current_key, frbb::destroy);
 }
-auto frbb::destroy(void * buf) -> void {
-	delete static_cast< frbb::pipe* >(buf);
+auto frbb::destroy(void* _buf) -> void {
+	if (_buf != nullptr) {
+		delete static_cast< frbb::pipe* >(_buf);
+	}
+	else {
+		delete static_cast< frbb::pipe* >(pthread_getspecific(frbb::current_key));
+	}
 }
 auto frbb::get_current() -> frbb::pipe {
-	return frbb::pipe(static_cast< frbb::BubblePipe* >(pthread_getspecific(frbb::current_key)));
+	return *static_cast< frbb::pipe* >(pthread_getspecific(frbb::current_key));
 }
 
 frbb::bubble::bubble() : __bursted(0) {
@@ -43,7 +48,12 @@ frbb::BubblePipePtr::~BubblePipePtr() {
 
 frbb::BubblePipe::BubblePipe() : __bubble(new frbb::bubble()), __prev(nullptr) {
 }
+frbb::BubblePipe::BubblePipe(frbb::BubblePipe* _prev) : __bubble(new frbb::bubble()), __prev(_prev) {
+}
 frbb::BubblePipe::~BubblePipe() {
+	if (this->__bubble != nullptr) {
+		delete this->__bubble;
+	}
 }
 auto frbb::BubblePipe::get_buffer() -> ::jmp_buf& {
 	return this->__buffer;
@@ -62,14 +72,14 @@ auto frbb::BubblePipe::blow_pipe() -> void {
 	longjmp(this->__buffer, this->__bubble->bursted());
 }
 auto frbb::BubblePipe::push() -> frbb::pipe {
-	frbb::pipe _new;
-	_new->__prev.reset(this);
-	frbb::soak(_new.get());
-	return _new;
+	frbb::pipe* _new = new frbb::pipe(new frbb::BubblePipe(this));
+	frbb::soak(_new);
+	return *_new;
 }
 auto frbb::BubblePipe::pop() -> frbb::pipe {
-	frbb::pipe _ret;
-	this->__prev.swap(_ret);
-	frbb::soak(_ret.get());
-	return _ret;
+	frbb::pipe* _ret = new frbb::pipe(nullptr);
+	this->__prev.swap(*_ret);
+	frbb::destroy();
+	frbb::soak(_ret);
+	return *_ret;
 }
