@@ -8,43 +8,72 @@ Copyright (c) 2016
 #include <csetjmp>
 #include <memory>
 
-namespace bbb {
+namespace frbb {
 
-	class BubblePtr;
-	class BubbleCls;
-	typedef BubblePtr bubble;
+	class BubblePipePtr;
+	class BubblePipe;
+	typedef BubblePipePtr pipe;
 
-	class BubblePtr : public std::shared_ptr< bbb::BubbleCls > {
+	extern pthread_key_t current_key;
+	extern pthread_once_t current_key_once;
+
+	auto soak(frbb::BubblePipe* _pipe = nullptr) -> void;
+	auto current_key_alloc() -> void;
+	auto destroy(void * buf) -> void;
+	auto get_current() -> frbb::pipe;
+
+	class bubble {
 	public:
-		BubblePtr();
-		BubblePtr(bbb::BubbleCls* _other);
-		virtual ~BubblePtr();
-	};
+		bubble();
+		bubble(frbb::bubble& _rhs);
+		bubble(frbb::bubble&& _rhs);
 
-	class BubbleCls {
-	public:
-		BubbleCls();
-		virtual ~BubbleCls();
-		BubbleCls(bbb::BubbleCls& _rhs) = delete;
-		BubbleCls(bbb::BubbleCls&& _rhs) = delete;
-		bbb::BubbleCls& operator=(bbb::BubbleCls&) = delete;
-
-		auto buffer() -> ::jmp_buf&;
-		auto is_set() -> bool;
-		auto set(bool _is_set) -> void;
-		auto blow() -> void;
+		auto bursted() -> int;
+		auto set_bursted(int _bursted) -> void;
 
 	private:
-		std::jmp_buf __buffer;
-		bool __is_set;
+		int __bursted;
 	};
+
+	class BubblePipePtr : public std::shared_ptr< frbb::BubblePipe > {
+	public:
+		BubblePipePtr();
+		BubblePipePtr(frbb::BubblePipe* _other);
+		virtual ~BubblePipePtr();
+	};
+
+	class BubblePipe {
+	public:
+		BubblePipe();
+		virtual ~BubblePipe();
+
+		BubblePipe(frbb::BubblePipe& _rhs) = delete;
+		BubblePipe(frbb::BubblePipe&& _rhs) = delete;
+		frbb::BubblePipe& operator=(frbb::BubblePipe&) = delete;
+
+		auto get_buffer() -> ::jmp_buf&;
+		auto get_bubble() -> frbb::bubble*;
+		auto set_bubble(frbb::bubble* _bubble = nullptr) -> void;
+		auto blow_pipe() -> void;
+
+		auto push() -> frbb::pipe;
+		auto pop() -> frbb::pipe;
+	private:
+		std::jmp_buf __buffer;
+		frbb::bubble* __bubble;
+		frbb::pipe __prev;
+	};
+
 }
 
-#define freeze(b)				\
-	b->set(true);				\
-	int ___err = setjmp(b->buffer());	\
-	if (!___err)
-#define intercept				\
-	else
-
-auto blow(bbb::bubble _bubble) -> void;
+#define freeze								\
+	frbb::get_current()->push();					\
+	setjmp(frbb::get_current()->get_buffer());			\
+	if (!frbb::get_current()->get_bubble()->bursted())
+#define burst(c, b)							\
+	c b = *(static_cast<c*>(frbb::get_current()->get_bubble())); \
+	frbb::get_current() = frbb::get_current()->pop();		\
+	if (b.bursted())
+#define blow(b)								\
+	{ frbb::get_current()->set_bubble(static_cast< frbb::bubble* >(b)); \
+		frbb::get_current()->blow_pipe(); }

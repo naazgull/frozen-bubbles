@@ -5,12 +5,9 @@ using namespace std;
 using namespace __gnu_cxx;
 #endif
 
-bbb::bubble _b;
-bbb::bubble _c;
-
 auto f(bool _blow) -> int {
 	if (_blow) {
-		blow(_b);
+		blow(nullptr);
 	}
 	else {
 		return 1;
@@ -19,19 +16,21 @@ auto f(bool _blow) -> int {
 }
 
 int main(int argc, char* argv[]) {
-	freeze(_b) {
+	frbb::soak();
+	freeze {
 		std::cout << "f() = " << f(false) << std::endl << std::flush;
 		std::cout << "f() = " << f(true) << std::endl << std::flush;
 
-		freeze(_c) {
+		freeze {
 			std::cout << "f() = " << f(false) << std::endl << std::flush;
-			std::cout << "f() = " << f(true) << std::endl << std::flush;-
+			std::cout << "f() = " << f(true) << std::endl << std::flush;
 		}
-		intercept {
+		burst(frbb::bubble, b1) {
+			std::cout << "interrupted " << b1.bursted() << std::endl << std::flush;
 		}
 	}
-	intercept {
-		std::cout << "interrupted" << std::endl << std::flush;
+	burst(frbb::bubble, b2) {
+		std::cout << "interrupted " << b2.bursted() << std::endl << std::flush;
 	}
 	return 0;
 }
