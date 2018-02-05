@@ -1,9 +1,10 @@
 INSTALLATION
 ------------
-
+```
 $ autoreconf -vfi && ./configure --prefix=/usr --sysconf=/etc "CXXFLAGS=-O3 -Wall"
 $ make
 $ sudo make install
+```
 
 USAGE
 -----
