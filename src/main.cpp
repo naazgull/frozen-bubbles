@@ -21,11 +21,9 @@ private:
 	std::string __reason;
 };
 
-MyBubble* _seg_fault = new MyBubble("this is a bubble");
-
 auto f(bool _blow) -> int {
 	if (_blow) {
-		blow(_seg_fault);
+		blow(new MyBubble("this is a bubble"));
 	}
 	else {
 		return 1;
@@ -47,7 +45,7 @@ int main(int argc, char* argv[]) {
 			std::cout << "inner freeze block: " << b1.reason() << std::endl << std::flush;
 		}
 	}
-	burst (MyBubble, b2) {
+	burst (frbb::bubble, b2) {
 		std::cout << "outer freeze block: " << b2.reason() << std::endl << std::flush;
 	}
 	return 0;
