@@ -88,8 +88,8 @@ SHORT-COMINGS
 1. No more than one **burst** block per **freeze** block.
 2. No bubbling over type, meaning that nested **freeze** blocks will always
    catch the blown bubble.
-2. Bursting bubbles variables names are available to the current code block,
-   meaning that with need to track bubble names.
+2. Bursting bubbles variable names are available to the current code block,
+   meaning that you'll need to track bubble names.
 3. You may get seg faults if blow a bubble from a different type that is
    bursted.
 
