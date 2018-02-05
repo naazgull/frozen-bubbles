@@ -9,7 +9,7 @@ $ sudo make install
 USAGE
 -----
 
-## Compilationa and linking
+## Compilation and linking
 
 1. Include **<frbb/frbb.h>** header file
 2. Ling against **-lfrozen-bubbles**
@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-SHORT-COMMINGS
+SHORT-COMINGS
 --------------
 
 1. No more than one **burst** block per **freeze** block.
